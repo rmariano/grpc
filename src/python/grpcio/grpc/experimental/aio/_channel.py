@@ -13,21 +13,12 @@
 # limitations under the License.
 """Invocation-side implementation of gRPC Asyncio Python."""
 
-import logging
-import sys
-import threading
-import time
-
-import grpc
 from grpc import _common
 from grpc._cython import cygrpc
-from grpc.experimental.aio import AioUnaryUnaryMultiCallable
-from grpc.experimental.aio import AioChannel as _AioChannel
-
-_LOGGER = logging.getLogger(__name__)
+from grpc.experimental import aio
 
 
-class _AioUnaryUnaryMultiCallable(AioUnaryUnaryMultiCallable):
+class UnaryUnaryMultiCallable(aio.UnaryUnaryMultiCallable):
 
     # pylint: disable=too-many-arguments
     def __init__(self, channel, method, request_serializer, response_deserializer):
@@ -68,8 +59,8 @@ class _AioUnaryUnaryMultiCallable(AioUnaryUnaryMultiCallable):
         return _common.deserialize(response, self._response_deserializer)
 
 
-class AioChannel(_AioChannel):
-    """A cygrpc.AioChannel-backed implementation of grpc.experimental.aio.AioChannel."""
+class Channel(aio.Channel):
+    """A cygrpc.AioChannel-backed implementation of grpc.experimental.aio.Channel."""
 
     def __init__(self, target, options, credentials, compression):
         """Constructor.
@@ -98,7 +89,7 @@ class AioChannel(_AioChannel):
                     request_serializer=None,
                     response_deserializer=None):
 
-        return _UnaryUnaryMultiCallable(
+        return UnaryUnaryMultiCallable(
             self._channel,
             _common.encode(method),
             request_serializer,
@@ -118,4 +109,4 @@ class AioChannel(_AioChannel):
         return False
 
     async def close(self):
-        self._close()
+        await self._close()

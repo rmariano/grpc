@@ -13,11 +13,8 @@
 # limitations under the License.
 
 cdef class AioChannel:
-    def __init__(self, target):
-        cdef grpc_channel_args args
-
-        args.arguments = NULL
-        self.g_channel = grpc_insecure_channel_create(<char *>target, &args, NULL)
+    def __cinit__(self, bytes target):
+        self.g_channel = grpc_insecure_channel_create(<char *>target, NULL, NULL)
         self.target = target
 
     def __repr__(self):

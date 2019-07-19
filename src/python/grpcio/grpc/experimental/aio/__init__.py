@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """gRPC's Asynchronous Python API."""
-import abc
 
-from grpc import Channel as _Channel
-from grpc import UnaryUnaryMultiCallable as _UnaryUnaryMultiCallable
+import abc
+import six
+
 from grpc._cython.cygrpc import init_grpc_aio
 
-class AioChannel(_Channel):
+
+class Channel(six.with_metaclass(abc.ABCMeta)):
     """Asynchronous Channel implementation."""
 
     @abc.abstractmethod
@@ -53,7 +54,7 @@ class AioChannel(_Channel):
         raise NotImplementedError()
 
 
-class AioUnaryUnaryMultiCallable(_UnaryUnaryMultiCallable):
+class UnaryUnaryMultiCallable(six.with_metaclass(abc.ABCMeta)):
     """Affords invoking a unary-unary RPC from client-side in an asynchronous way."""
 
     @abc.abstractmethod
@@ -104,6 +105,5 @@ def insecure_channel(target, options=None, compression=None):
       A Channel.
     """
     from grpc.experimental.aio import _channel  # pylint: disable=cyclic-import
-    return _channel.AioChannel(target, ()
+    return _channel.Channel(target, ()
                             if options is None else options, None, compression)
-

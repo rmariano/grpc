@@ -13,67 +13,69 @@
 # limitations under the License.
 
 import asyncio
-import subprocess
+import multiprocessing
 import time
 import logging
 import unittest
 
 from grpc.experimental.aio import init_grpc_aio
 from grpc.experimental.aio import insecure_channel
+from src.proto.grpc.testing.messages_pb2 import SimpleRequest
+from src.proto.grpc.testing.messages_pb2 import SimpleResponse
 
-from proto import echo_pb2
-
-
-class Server:
+# TODO: Change for an asynchronous server version once it's
+# implemented.
+class Server(multiprocessing.Process):
     """
-    TODO: Change for the asynchronous server version.
-
-    Synchronous server runs in another process which initializes
-    implicitly the grpc using the synchronous configuration.
-    Both worlds can not cohexist within the same process.
+    Synchronous server is executed in another process which initializes
+    implicitly the grpc using the synchronous configuration. Both worlds
+    can not cohexist within the same process.
     """
-    def __init__(self):
-        self._process = None
 
-    def start(self):
-        return
-        assert not self._process
+    PORT = 3333
 
-        self._process = subprocess.Popen(
-            ["python", "src/python/grpcio_tests/tests/asyncio/end2end/sync_server.py"],
-            env=None
-        )
+    def run(self):
+        import grpc
+        from time import sleep
+        from concurrent import futures
+        from src.proto.grpc.testing.test_pb2_grpc import add_TestServiceServicer_to_server
+        from src.proto.grpc.testing.test_pb2_grpc import TestServiceServicer
 
-        # giving some time for starting the server
-        time.sleep(1)
+        class TestServiceServicer(TestServiceServicer):
+            def UnaryCall(self, request, context):
+                return SimpleResponse()
 
-    def stop(self):
-        return
-        self._process.terminate()
+        server = grpc.server(futures.ThreadPoolExecutor(max_workers=1))
+        add_TestServiceServicer_to_server(TestServiceServicer(), server)
+        server.add_insecure_port('localhost:%d' % self.PORT)
+        server.start()
+        while True:
+            sleep(1)
 
 
 class TestClient(unittest.TestCase):
     def setUp(self):
-        grpc_init_asyncio()
         self._server = Server()
         self._server.start()
+        time.sleep(0.1)
+        init_grpc_aio()
 
     def tearDown(self):
-        self._server.stop()
+        self._server.terminate()
 
     def test_unary_unary(self):
         async def coro():
-            channel = insecure_channel('localhost:3333')
+            channel = insecure_channel('localhost:%d' % Server.PORT)
             hi = channel.unary_unary(
-                '/echo.Echo/Hi',
-                request_serializer=echo_pb2.EchoRequest.SerializeToString,
-                response_deserializer=echo_pb2.EchoReply.FromString
+                '/grpc.testing.TestService/UnaryCall',
+                request_serializer=SimpleRequest.SerializeToString,
+                response_deserializer=SimpleResponse.FromString
             )
-            response = await hi(echo_pb2.EchoRequest(message="Hi Grpc Asyncio"))
+            response = await hi(SimpleRequest())
 
-            assert response.message == "Hi Grpc Asyncio"
+            self.assertEqual(type(response), SimpleResponse)
 
-            channel.close()
+            await channel.close()
 
         asyncio.get_event_loop().run_until_complete(coro())
 
