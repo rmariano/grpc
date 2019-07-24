@@ -20,21 +20,21 @@ import time
 cdef class _AioCall:
 
     def __cinit__(self, AioChannel channel):
-        self.channel = channel
-        self.functor.functor_run = _AioCall.functor_run
+        self._channel = channel
+        self._functor.functor_run = _AioCall.functor_run
 
-        self.cq = grpc_completion_queue_create_for_callback(
-            <grpc_experimental_completion_queue_functor *> &self.functor,
+        self._cq = grpc_completion_queue_create_for_callback(
+            <grpc_experimental_completion_queue_functor *> &self._functor,
             NULL
         )
 
-        self.watcher_call.functor.functor_run = _AioCall.watcher_call_functor_run
-        self.watcher_call.obj = <cpython.PyObject *> self
+        self._watcher_call.functor.functor_run = _AioCall.watcher_call_functor_run
+        self._watcher_call.obj = <cpython.PyObject *> self
         self._waiter_call = None
 
     def __dealloc__(self):
-        grpc_completion_queue_shutdown(self.cq)
-        grpc_completion_queue_destroy(self.cq)
+        grpc_completion_queue_shutdown(self._cq)
+        grpc_completion_queue_destroy(self._cq)
 
     def __repr__(self):
         class_name = self.__class__.__name__ 
@@ -85,10 +85,10 @@ cdef class _AioCall:
         )
 
         call = grpc_channel_create_call(
-            self.channel.g_channel,
+            self._channel.g_channel,
             NULL,
             0,
-            self.cq,
+            self._cq,
             method_slice,
             NULL,
             _timespec_from_time(int(time.time()) + 4),
@@ -144,7 +144,7 @@ cdef class _AioCall:
             call,
             ops,
             6,
-            &self.watcher_call.functor,
+            &self._watcher_call.functor,
             NULL
         )
 

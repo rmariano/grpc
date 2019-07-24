@@ -14,14 +14,14 @@
 
 cdef class _AsyncioSocket:
     cdef:
-        grpc_custom_socket * g_socket
-        grpc_custom_connect_callback g_connect_cb
-        grpc_custom_read_callback g_read_cb
-        object reader
-        object writer
-        object task_read
-        object task_connect
-        char * read_buffer
+        grpc_custom_socket * _g_socket
+        grpc_custom_connect_callback _g_connect_cb
+        grpc_custom_read_callback _g_read_cb
+        object _reader
+        object _writer
+        object _task_read
+        object _task_connect
+        char * _read_buffer
 
     @staticmethod
     cdef _AsyncioSocket create(grpc_custom_socket * g_socket)

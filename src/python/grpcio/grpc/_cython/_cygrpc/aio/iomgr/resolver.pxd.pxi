@@ -14,10 +14,8 @@
 
 cdef class _AsyncioResolver:
     cdef:
-        grpc_custom_resolver* g_resolver
-        object task_resolve
-        char* host
-        char* port
+        grpc_custom_resolver* _g_resolver
+        object _task_resolve
 
     @staticmethod
     cdef _AsyncioResolver create(grpc_custom_resolver* g_resolver)

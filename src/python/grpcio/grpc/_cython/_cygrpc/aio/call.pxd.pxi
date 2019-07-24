@@ -15,10 +15,10 @@
 
 cdef class _AioCall:
     cdef:
-        AioChannel channel
-        CallbackContext watcher_call
-        grpc_completion_queue * cq
-        grpc_experimental_completion_queue_functor functor
+        AioChannel _channel
+        CallbackContext _watcher_call
+        grpc_completion_queue * _cq
+        grpc_experimental_completion_queue_functor _functor
         object _waiter_call
 
     @staticmethod

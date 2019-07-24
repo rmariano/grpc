@@ -15,7 +15,7 @@
 cdef class AioChannel:
     def __cinit__(self, bytes target):
         self.g_channel = grpc_insecure_channel_create(<char *>target, NULL, NULL)
-        self.target = target
+        self._target = target
 
     def __repr__(self):
         class_name = self.__class__.__name__ 
