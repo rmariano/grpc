@@ -14,8 +14,6 @@
 
 cimport cpython
 
-import time
-
 
 cdef class _AioCall:
 
@@ -91,7 +89,7 @@ cdef class _AioCall:
             self._cq,
             method_slice,
             NULL,
-            _timespec_from_time(int(time.time()) + 4),
+            _timespec_from_time(None),
             NULL
         )
 
