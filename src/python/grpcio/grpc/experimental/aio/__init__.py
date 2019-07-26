@@ -27,7 +27,7 @@ class Channel(six.with_metaclass(abc.ABCMeta)):
                     method,
                     request_serializer=None,
                     response_deserializer=None):
-        """Creates a AioUnaryUnaryMultiCallable for a unary-unary method.
+        """Creates a UnaryUnaryMultiCallable for a unary-unary method.
 
         Args:
           method: The name of the RPC method.
@@ -38,7 +38,7 @@ class Channel(six.with_metaclass(abc.ABCMeta)):
             is passed.
 
         Returns:
-          A AioUnaryUnaryMultiCallable value for the named unary-unary method.
+          A UnaryUnaryMultiCallable value for the named unary-unary method.
         """
         raise NotImplementedError()
 
