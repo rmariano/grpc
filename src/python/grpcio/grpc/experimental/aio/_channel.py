@@ -106,7 +106,6 @@ class Channel(aio.Channel):
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self._close()
-        return False
 
     async def close(self):
         await self._close()
