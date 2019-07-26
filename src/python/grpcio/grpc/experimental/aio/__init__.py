@@ -53,6 +53,20 @@ class Channel(six.with_metaclass(abc.ABCMeta)):
         """
         raise NotImplementedError()
 
+    @abc.abstractmethod
+    async def __aenter__(self):
+        """Starts an asynchronous context manager.
+
+        Returns:
+          Channel the channel that was instantiated.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Finishes the asynchronous context manager by closing gracefully the channel."""
+        raise NotImplementedError()
+
 
 class UnaryUnaryMultiCallable(six.with_metaclass(abc.ABCMeta)):
     """Affords invoking a unary-unary RPC from client-side in an asynchronous way."""
