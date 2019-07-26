@@ -13,15 +13,13 @@
 # limitations under the License.
 
 import asyncio
+import logging
 import multiprocessing
 import time
-import logging
 import unittest
 
-from grpc.experimental.aio import init_grpc_aio
-from grpc.experimental.aio import insecure_channel
-from src.proto.grpc.testing.messages_pb2 import SimpleRequest
-from src.proto.grpc.testing.messages_pb2 import SimpleResponse
+from grpc.experimental import aio
+from src.proto.grpc.testing import messages_pb2
 
 # TODO: Change for an asynchronous server version once it's
 # implemented.
@@ -29,7 +27,7 @@ class Server(multiprocessing.Process):
     """
     Synchronous server is executed in another process which initializes
     implicitly the grpc using the synchronous configuration. Both worlds
-    can not cohexist within the same process.
+    can not coexist within the same process.
     """
 
     PORT = 3333
@@ -43,37 +41,40 @@ class Server(multiprocessing.Process):
 
         class TestServiceServicer(TestServiceServicer):
             def UnaryCall(self, request, context):
-                return SimpleResponse()
+                return messages_pb2.SimpleResponse()
 
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=1))
         add_TestServiceServicer_to_server(TestServiceServicer(), server)
         server.add_insecure_port('localhost:%d' % self.PORT)
         server.start()
-        while True:
-            sleep(1)
+        try:
+            sleep(3600)
+        finally:
+            server.stop(None)
 
 
 class TestClient(unittest.TestCase):
     def setUp(self):
         self._server = Server()
         self._server.start()
+        # TODO(https://github.com/grpc/grpc/issues/19762) remove the sleep.
         time.sleep(0.1)
-        init_grpc_aio()
+        aio.init_grpc_aio()
 
     def tearDown(self):
         self._server.terminate()
 
     def test_unary_unary(self):
         async def coro():
-            channel = insecure_channel('localhost:%d' % Server.PORT)
+            channel = aio.insecure_channel('localhost:%d' % Server.PORT)
             hi = channel.unary_unary(
                 '/grpc.testing.TestService/UnaryCall',
-                request_serializer=SimpleRequest.SerializeToString,
-                response_deserializer=SimpleResponse.FromString
+                request_serializer=messages_pb2.SimpleRequest.SerializeToString,
+                response_deserializer=messages_pb2.SimpleResponse.FromString
             )
-            response = await hi(SimpleRequest())
+            response = await hi(messages_pb2.SimpleRequest())
 
-            self.assertEqual(type(response), SimpleResponse)
+            self.assertEqual(type(response), messages_pb2.SimpleResponse)
 
             await channel.close()
 
