@@ -83,7 +83,7 @@ cdef class _AioCall:
         )
 
         call = grpc_channel_create_call(
-            self._channel.g_channel,
+            self._channel.channel,
             NULL,
             0,
             self._cq,

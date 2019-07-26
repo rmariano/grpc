@@ -14,5 +14,5 @@
 
 cdef class AioChannel:
     cdef:
-        grpc_channel * g_channel
+        grpc_channel * channel
         bytes _target

@@ -16,14 +16,14 @@ import asyncio
 
 cdef class _AsyncioTimer:
     def __cinit__(self):
-        self._g_timer = NULL
+        self._grpc_timer = NULL
         self._timer_handler = None
         self._active = 0
 
     @staticmethod
-    cdef _AsyncioTimer create(grpc_custom_timer * g_timer, deadline):
+    cdef _AsyncioTimer create(grpc_custom_timer * grpc_timer, deadline):
         timer = _AsyncioTimer()
-        timer._g_timer = g_timer
+        timer._grpc_timer = grpc_timer
         timer._deadline = deadline
         timer._timer_handler = asyncio.get_running_loop().call_later(deadline, timer._on_deadline)
         timer._active = 1
@@ -31,7 +31,7 @@ cdef class _AsyncioTimer:
 
     def _on_deadline(self):
         self._active = 0
-        grpc_custom_timer_callback(self._g_timer, <grpc_error*>0)
+        grpc_custom_timer_callback(self._grpc_timer, <grpc_error*>0)
 
     def __repr__(self):
         class_name = self.__class__.__name__ 

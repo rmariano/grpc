@@ -17,13 +17,13 @@ from libc.stdlib cimport malloc
 
 cdef class _AsyncioResolver:
     def __cinit__(self):
-        self._g_resolver = NULL
+        self._grpc_resolver = NULL
         self._task_resolve = None
 
     @staticmethod
-    cdef _AsyncioResolver create(grpc_custom_resolver* g_resolver):
+    cdef _AsyncioResolver create(grpc_custom_resolver* grpc_resolver):
         resolver = _AsyncioResolver()
-        resolver._g_resolver = g_resolver
+        resolver._grpc_resolver = grpc_resolver
         return resolver
 
     def __repr__(self):
@@ -42,13 +42,13 @@ cdef class _AsyncioResolver:
 
         if not error:
             grpc_custom_resolve_callback(
-                <grpc_custom_resolver*>self._g_resolver,
+                <grpc_custom_resolver*>self._grpc_resolver,
                 tuples_to_resolvaddr(res),
                 <grpc_error*>0
             )
         else:
             grpc_custom_resolve_callback(
-                <grpc_custom_resolver*>self._g_resolver,
+                <grpc_custom_resolver*>self._grpc_resolver,
                 NULL,
                 grpc_socket_error("getaddrinfo {}".format(str(e)).encode())
             )

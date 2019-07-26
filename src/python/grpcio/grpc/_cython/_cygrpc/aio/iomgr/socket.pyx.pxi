@@ -18,8 +18,9 @@ from libc cimport string
 
 cdef class _AsyncioSocket:
     def __cinit__(self):
-        self._g_socket = NULL
-        self._g_connect_cb = NULL
+        self._grpc_socket = NULL
+        self._grpc_connect_cb = NULL
+        self._grpc_read_cb = NULL
         self._reader = None
         self._writer = None
         self._task_connect = None
@@ -27,9 +28,9 @@ cdef class _AsyncioSocket:
         self._read_buffer = NULL
 
     @staticmethod
-    cdef _AsyncioSocket create(grpc_custom_socket * g_socket):
+    cdef _AsyncioSocket create(grpc_custom_socket * grpc_socket):
         socket = _AsyncioSocket()
-        socket._g_socket = g_socket
+        socket._grpc_socket = grpc_socket
         return socket
 
     def __repr__(self):
@@ -53,13 +54,13 @@ cdef class _AsyncioSocket:
             sock = self._writer.transport.get_extra_info('socket')
             sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
 
-            self._g_connect_cb(
-                <grpc_custom_socket*>self._g_socket,
+            self._grpc_connect_cb(
+                <grpc_custom_socket*>self._grpc_socket,
                 <grpc_error*>0
             )
         else:
-            self._g_connect_cb(
-                <grpc_custom_socket*>self._g_socket,
+            self._grpc_connect_cb(
+                <grpc_custom_socket*>self._grpc_socket,
                 grpc_socket_error("connect {}".format(str(e)).encode())
             )
 
@@ -79,38 +80,38 @@ cdef class _AsyncioSocket:
                 <char*>buffer_,
                 len(buffer_)
             )
-            self._g_read_cb(
-                <grpc_custom_socket*>self._g_socket,
+            self._grpc_read_cb(
+                <grpc_custom_socket*>self._grpc_socket,
                 len(buffer_),
                 <grpc_error*>0
             )
         else:
-            self._g_read_cb(
-                <grpc_custom_socket*>self._g_socket,
+            self._grpc_read_cb(
+                <grpc_custom_socket*>self._grpc_socket,
                 -1,
                 grpc_socket_error("read {}".format(error_msg).encode())
             )
 
-    cdef void connect(self, object host, object port, grpc_custom_connect_callback g_connect_cb):
+    cdef void connect(self, object host, object port, grpc_custom_connect_callback grpc_connect_cb):
         assert not self._task_connect
 
         self._task_connect = asyncio.create_task(
             asyncio.open_connection(host, port)
         )
+        self._grpc_connect_cb = grpc_connect_cb
         self._task_connect.add_done_callback(self._connect_cb)
-        self._g_connect_cb = g_connect_cb
 
-    cdef void read(self, char * buffer_, size_t length, grpc_custom_read_callback g_read_cb):
+    cdef void read(self, char * buffer_, size_t length, grpc_custom_read_callback grpc_read_cb):
         assert not self._task_read
 
         self._task_read = asyncio.create_task(
             self._reader.read(n=length)
         )
+        self._grpc_read_cb = grpc_read_cb
         self._task_read.add_done_callback(self._read_cb)
-        self._g_read_cb = g_read_cb
         self._read_buffer = buffer_
  
-    cdef void write(self, grpc_slice_buffer * g_slice_buffer, grpc_custom_write_callback g_write_cb):
+    cdef void write(self, grpc_slice_buffer * g_slice_buffer, grpc_custom_write_callback grpc_write_cb):
         cdef char* start
         buffer_ = bytearray()
         for i in range(g_slice_buffer.count):
@@ -120,8 +121,8 @@ cdef class _AsyncioSocket:
 
         self._writer.write(buffer_)
 
-        g_write_cb(
-            <grpc_custom_socket*>self._g_socket,
+        grpc_write_cb(
+            <grpc_custom_socket*>self._grpc_socket,
             <grpc_error*>0
         )
 
