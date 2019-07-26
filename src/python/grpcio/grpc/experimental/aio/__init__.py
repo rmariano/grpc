@@ -46,7 +46,7 @@ class Channel(six.with_metaclass(abc.ABCMeta)):
     async def close(self):
         """Closes this Channel and releases all resources held by it.
 
-        Closing the Channel will immediately terminate all RPCs active with the
+        Closing the Channel will proactively terminate all RPCs active with the
         Channel and it is not valid to invoke new RPCs with the Channel.
 
         This method is idempotent.
