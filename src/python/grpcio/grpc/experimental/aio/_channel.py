@@ -26,7 +26,6 @@ class UnaryUnaryMultiCallable(aio.UnaryUnaryMultiCallable):
         self._method = method
         self._request_serializer = request_serializer
         self._response_deserializer = response_deserializer
-        self._context = cygrpc.build_census_context()
 
     async def __call__(self,
                  request,
