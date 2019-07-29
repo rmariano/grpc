@@ -137,7 +137,7 @@ cdef class _AioCall:
             for operation in all_operations:
                 operation.un_c()
 
-            return receive_message_operation._message
+            return receive_message_operation.message()
 
         finally:
             grpc_call_unref(call)
