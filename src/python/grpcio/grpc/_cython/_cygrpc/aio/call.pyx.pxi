@@ -71,8 +71,6 @@ cdef class _AioCall:
         cdef Operation receive_message_operation
         cdef Operation receive_status_on_client_operation
 
-        cdef tuple all_operations
-
         cdef grpc_call_error call_status
 
 
@@ -97,25 +95,28 @@ cdef class _AioCall:
         ops = <grpc_op *>gpr_malloc(sizeof(grpc_op) * self._OP_ARRAY_LENGTH)
 
         initial_metadata_operation = SendInitialMetadataOperation(_EMPTY_METADATA, GRPC_INITIAL_METADATA_USED_MASK)
-        send_message_operation = SendMessageOperation(request, _EMPTY_FLAGS)
-        send_close_from_client_operation = SendCloseFromClientOperation(_EMPTY_FLAGS)
-        receive_initial_metadata_operation = ReceiveInitialMetadataOperation(_EMPTY_FLAGS)
-        receive_message_operation = ReceiveMessageOperation(_EMPTY_FLAGS)
-        receive_status_on_client_operation = ReceiveStatusOnClientOperation(_EMPTY_FLAGS)
+        initial_metadata_operation.c()
+        ops[0] = <grpc_op> initial_metadata_operation.c_op
 
-        all_operations = (
-            initial_metadata_operation,
-            send_message_operation,
-            send_close_from_client_operation,
-            receive_initial_metadata_operation,
-            receive_message_operation,
-            receive_status_on_client_operation
-        )
-        cdef int idx = 0
-        for operation in all_operations:
-            operation.c()
-            ops[idx] = <grpc_op> operation.c_op
-            idx += 1
+        send_message_operation = SendMessageOperation(request, _EMPTY_FLAGS)
+        send_message_operation.c()
+        ops[1] = <grpc_op> send_message_operation.c_op
+
+        send_close_from_client_operation = SendCloseFromClientOperation(_EMPTY_FLAGS)
+        send_close_from_client_operation.c()
+        ops[2] = <grpc_op> send_close_from_client_operation.c_op
+
+        receive_initial_metadata_operation = ReceiveInitialMetadataOperation(_EMPTY_FLAGS)
+        receive_initial_metadata_operation.c()
+        ops[3] = <grpc_op> receive_initial_metadata_operation.c_op
+
+        receive_message_operation = ReceiveMessageOperation(_EMPTY_FLAGS)
+        receive_message_operation.c()
+        ops[4] = <grpc_op> receive_message_operation.c_op
+
+        receive_status_on_client_operation = ReceiveStatusOnClientOperation(_EMPTY_FLAGS)
+        receive_status_on_client_operation.c()
+        ops[5] = <grpc_op> receive_status_on_client_operation.c_op
 
         self._waiter_call = asyncio.get_running_loop().create_future()
 
@@ -135,9 +136,12 @@ cdef class _AioCall:
             await self._waiter_call
 
         finally:
-
-            for operation in all_operations:
-                operation.un_c()
+            initial_metadata_operation.un_c()
+            send_message_operation.un_c()
+            send_close_from_client_operation.un_c()
+            receive_initial_metadata_operation.un_c()
+            receive_message_operation.un_c()
+            receive_status_on_client_operation.un_c()
 
             grpc_call_unref(call)
             gpr_free(ops)
