@@ -2,19 +2,19 @@ import asyncio
 import logging
 import unittest
 
+from unittest.mock import patch
+
 from grpc.experimental import aio
 
 
 class TestInsecureChannel(unittest.TestCase):
-    def setUp(self):
-        aio.init_grpc_aio()
-
     def test_insecure_channel(self):
         async def coro():
-            channel = aio.insecure_channel('target')
+            channel = aio.insecure_channel('target:port')
             self.assertIsInstance(channel, aio.Channel)
 
-        asyncio.get_event_loop().run_until_complete(coro())
+        with patch("grpc._cython.cygrpc"):
+            asyncio.get_event_loop().run_until_complete(coro())
 
 
 if __name__ == '__main__':

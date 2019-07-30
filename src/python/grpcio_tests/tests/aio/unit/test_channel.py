@@ -2,33 +2,28 @@ import asyncio
 import logging
 import unittest
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from grpc.experimental import aio
 
 
 class TestChannel(unittest.TestCase):
-    def setUp(self):
-        aio.init_grpc_aio()
-
     def test_unary_unary(self):
         async def coro():
-            channel = aio.insecure_channel('target')
+            channel = aio.insecure_channel('target:port')
             self.assertIsInstance(
                 channel.unary_unary('/grpc.testing.TestService/UnaryCall'),
                 aio.UnaryUnaryMultiCallable
             )
 
-        asyncio.get_event_loop().run_until_complete(coro())
+        with patch("grpc._cython.cygrpc"):
+            asyncio.get_event_loop().run_until_complete(coro())
 
 
 class TestUnaryUnaryMultiCallable(unittest.TestCase):
-    def setUp(self):
-        aio.init_grpc_aio()
-
     def test_call(self):
         async def coro():
-            channel = aio.insecure_channel('target')
+            channel = aio.insecure_channel('target:port')
             multicallable = channel.unary_unary('/grpc.testing.TestService/UnaryCall')
             multicallable._channel = MagicMock()
             async def unary_unary(*args, **kwargs):
@@ -39,7 +34,8 @@ class TestUnaryUnaryMultiCallable(unittest.TestCase):
             self.assertEqual(response, 'world')
             multicallable._channel.unary_unary.assert_called_once_with(b'/grpc.testing.TestService/UnaryCall', b'hello')
 
-        asyncio.get_event_loop().run_until_complete(coro())
+        with patch("grpc._cython.cygrpc"):
+            asyncio.get_event_loop().run_until_complete(coro())
 
 if __name__ == '__main__':
     logging.basicConfig()
