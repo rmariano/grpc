@@ -134,11 +134,12 @@ cdef class _AioCall:
 
             await self._waiter_call
 
+        finally:
+
             for operation in all_operations:
                 operation.un_c()
 
-            return receive_message_operation.message()
-
-        finally:
             grpc_call_unref(call)
             gpr_free(ops)
+
+            return receive_message_operation.message()
