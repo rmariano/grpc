@@ -29,4 +29,5 @@ cdef class _AsyncioSocket:
     cdef void connect(self, object host, object port, grpc_custom_connect_callback grpc_connect_cb)
     cdef void write(self, grpc_slice_buffer * g_slice_buffer, grpc_custom_write_callback grpc_write_cb)
     cdef void read(self, char * buffer_, size_t length, grpc_custom_read_callback grpc_read_cb)
+    cdef void close(self)
     cdef bint is_connected(self)

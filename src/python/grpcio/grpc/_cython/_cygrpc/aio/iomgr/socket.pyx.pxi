@@ -34,7 +34,7 @@ cdef class _AsyncioSocket:
         return socket
 
     def __repr__(self):
-        class_name = self.__class__.__name__ 
+        class_name = self.__class__.__name__
         id_ = id(self)
         connected = self.is_connected()
         return f"<{class_name} {id_} connected={connected}>"
@@ -110,7 +110,7 @@ cdef class _AsyncioSocket:
         self._grpc_read_cb = grpc_read_cb
         self._task_read.add_done_callback(self._read_cb)
         self._read_buffer = buffer_
- 
+
     cdef void write(self, grpc_slice_buffer * g_slice_buffer, grpc_custom_write_callback grpc_write_cb):
         cdef char* start
         buffer_ = bytearray()
@@ -125,6 +125,10 @@ cdef class _AsyncioSocket:
             <grpc_custom_socket*>self._grpc_socket,
             <grpc_error*>0
         )
+
+    cdef void close(self):
+        if self.is_connected():
+            self._writer.close()
 
     cdef bint is_connected(self):
         return self._reader and not self._reader._transport.is_closing()
