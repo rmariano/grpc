@@ -37,8 +37,8 @@ class Server(multiprocessing.Process):
     implicitly the grpc using the synchronous configuration. Both worlds
     can not coexist within the same process.
     """
-
-    PORT = 3333
+    def __init__(self, host_and_port):
+        super(Server, self).__init__(target=Server._start_server, args=(host_and_port,))
 
     def start(self):
         super(Server, self).start()
@@ -48,12 +48,12 @@ class Server(multiprocessing.Process):
         # replace the whole fixture for a one using the asynchronous server.
         sleep(0.1)
 
-    def run(self):
-
+    @staticmethod
+    def _start_server(host_and_port):
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=1))
         test_pb2_grpc.add_TestServiceServicer_to_server(TestServiceServicer(),
                                                         server)
-        server.add_insecure_port('localhost:%d' % self.PORT)
+        server.add_insecure_port(host_and_port)
         server.start()
         try:
             sleep(3600)

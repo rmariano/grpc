@@ -14,15 +14,27 @@
 
 import asyncio
 import unittest
+import socket
 
 from grpc.experimental import aio
 from tests_aio.unit import sync_server
 
 
+def _get_free_loopback_tcp_port():
+    if socket.has_ipv6:
+        tcp_socket = socket.socket(socket.AF_INET6)
+    else:
+        tcp_socket = socket.socket(socket.AF_INET)
+    tcp_socket.bind(('', 0))
+    address_tuple = tcp_socket.getsockname()
+    return tcp_socket, "localhost:%s" % (address_tuple[1])
+
+
 class AioTestBase(unittest.TestCase):
 
     def setUp(self):
-        self._server = sync_server.Server()
+        self._socket, self._target = _get_free_loopback_tcp_port()
+        self._server = sync_server.Server(self._target)
         self._server.start()
         self._loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self._loop)
@@ -30,6 +42,7 @@ class AioTestBase(unittest.TestCase):
 
     def tearDown(self):
         self._server.terminate()
+        self._socket.close()
 
     @property
     def loop(self):
@@ -37,4 +50,4 @@ class AioTestBase(unittest.TestCase):
 
     @property
     def server_target(self):
-        return 'localhost:%d' % sync_server.Server.PORT
+        return self._target
