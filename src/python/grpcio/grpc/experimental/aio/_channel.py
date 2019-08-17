@@ -20,7 +20,6 @@ from grpc.experimental import aio
 
 class UnaryUnaryMultiCallable(aio.UnaryUnaryMultiCallable):
 
-    # pylint: disable=too-many-arguments
     def __init__(self, channel, method, request_serializer,
                  response_deserializer):
         self._channel = channel
