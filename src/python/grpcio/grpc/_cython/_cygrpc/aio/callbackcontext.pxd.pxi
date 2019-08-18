@@ -16,4 +16,4 @@ cimport cpython
 
 cdef struct CallbackContext:
     grpc_experimental_completion_queue_functor functor
-    cpython.PyObject *obj
+    cpython.PyObject *waiter

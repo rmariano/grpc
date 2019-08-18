@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from libc.stdlib cimport malloc
-
 
 cdef class _AsyncioResolver:
     def __cinit__(self):
@@ -27,7 +25,7 @@ cdef class _AsyncioResolver:
         return resolver
 
     def __repr__(self):
-        class_name = self.__class__.__name__ 
+        class_name = self.__class__.__name__
         id_ = id(self)
         return f"<{class_name} {id_}>"
 

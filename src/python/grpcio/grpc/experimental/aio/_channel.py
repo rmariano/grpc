@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Invocation-side implementation of gRPC Asyncio Python."""
-import time
 
 from grpc import _common
 from grpc._cython import cygrpc
@@ -21,17 +20,37 @@ from grpc.experimental import aio
 
 class UnaryUnaryMultiCallable(aio.UnaryUnaryMultiCallable):
 
-    # pylint: disable=too-many-arguments
-    def __init__(self, channel, method, request_serializer, response_deserializer):
+    def __init__(self, channel, method, request_serializer,
+                 response_deserializer):
         self._channel = channel
         self._method = method
         self._request_serializer = request_serializer
         self._response_deserializer = response_deserializer
 
-    async def __call__(self, request, timeout=None):
-        request = _common.serialize(request, self._request_serializer)
+    async def __call__(self,
+                       request,
+                       timeout=None,
+                       metadata=None,
+                       credentials=None,
+                       wait_for_ready=None,
+                       compression=None):
+
+        if metadata:
+            raise NotImplementedError("TODO: metadata not implemented yet")
+
+        if credentials:
+            raise NotImplementedError("TODO: credentials not implemented yet")
+
+        if wait_for_ready:
+            raise NotImplementedError("TODO: wait_for_ready not implemented yet")
+
+        if compression:
+            raise NotImplementedError("TODO: compression not implemented yet")
+
+        serialized_request = _common.serialize(request, self._request_serializer)
         timeout = None if timeout is None else time.time() + timeout
-        response = await self._channel.unary_unary(self._method, request, timeout)
+        response = await self._channel.unary_unary(self._method, serialize_request, timeout)
+
         return _common.deserialize(response, self._response_deserializer)
 
 
@@ -65,13 +84,9 @@ class Channel(aio.Channel):
                     request_serializer=None,
                     response_deserializer=None):
 
-        return UnaryUnaryMultiCallable(
-            self._channel,
-            _common.encode(method),
-            request_serializer,
-            response_deserializer
-        )
-
+        return UnaryUnaryMultiCallable(self._channel, _common.encode(method),
+                                       request_serializer,
+                                       response_deserializer)
 
     async def _close(self):
         # TODO: Send cancellation status

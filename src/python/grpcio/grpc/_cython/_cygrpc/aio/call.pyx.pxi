@@ -16,11 +16,10 @@ cimport cpython
 
 _EMPTY_FLAGS = 0
 _EMPTY_METADATA = ()
+_OP_ARRAY_LENGTH = 6
 
 
 cdef class _AioCall:
-
-    _OP_ARRAY_LENGTH = 6
 
     def __cinit__(self, AioChannel channel):
         self._channel = channel
@@ -32,7 +31,7 @@ cdef class _AioCall:
         )
 
         self._watcher_call.functor.functor_run = _AioCall.watcher_call_functor_run
-        self._watcher_call.obj = <cpython.PyObject *> self
+        self._watcher_call.waiter = <cpython.PyObject *> self
         self._waiter_call = None
 
     def __dealloc__(self):
@@ -50,7 +49,7 @@ cdef class _AioCall:
 
     @staticmethod
     cdef void watcher_call_functor_run(grpc_experimental_completion_queue_functor* functor, int succeed):
-        call = <_AioCall>(<CallbackContext *>functor).obj
+        call = <_AioCall>(<CallbackContext *>functor).waiter
 
         assert call._waiter_call
 
@@ -92,7 +91,7 @@ cdef class _AioCall:
 
         grpc_slice_unref(method_slice)
 
-        ops = <grpc_op *>gpr_malloc(sizeof(grpc_op) * self._OP_ARRAY_LENGTH)
+        ops = <grpc_op *>gpr_malloc(sizeof(grpc_op) * _OP_ARRAY_LENGTH)
 
         initial_metadata_operation = SendInitialMetadataOperation(_EMPTY_METADATA, GRPC_INITIAL_METADATA_USED_MASK)
         initial_metadata_operation.c()
@@ -123,7 +122,7 @@ cdef class _AioCall:
         call_status = grpc_call_start_batch(
             call,
             ops,
-            self._OP_ARRAY_LENGTH,
+            _OP_ARRAY_LENGTH,
             &self._watcher_call.functor,
             NULL
         )

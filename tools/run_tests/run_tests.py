@@ -703,6 +703,10 @@ class PythonConfig(
 
 class PythonLanguage(object):
 
+    _DEFAULT_COMMAND = 'test_lite'
+    _TEST_SPECS_FILE = 'src/python/grpcio_tests/tests/tests.json'
+    _TEST_FOLDER = 'test'
+
     def configure(self, config, args):
         self.config = config
         self.args = args
@@ -710,8 +714,7 @@ class PythonLanguage(object):
 
     def test_specs(self):
         # load list of known test suites
-        with open(
-                'src/python/grpcio_tests/tests/tests.json') as tests_json_file:
+        with open(self._TEST_SPECS_FILE) as tests_json_file:
             tests_json = json.load(tests_json_file)
         environment = dict(_FORCE_ENVIRON_FOR_WRAPPERS)
         return [
@@ -721,7 +724,8 @@ class PythonLanguage(object):
                 environ=dict(
                     list(environment.items()) + [(
                         'GRPC_PYTHON_TESTRUNNER_FILTER', str(suite_name))]),
-                shortname='%s.test.%s' % (config.name, suite_name),
+                shortname='%s.%s.%s' % (config.name, self._TEST_FOLDER,
+                                        suite_name),
             ) for suite_name in tests_json for config in self.pythons
         ]
 
@@ -789,7 +793,7 @@ class PythonLanguage(object):
             venv_relative_python = ['bin/python']
             toolchain = ['unix']
 
-        test_command = 'test_lite'
+        test_command = self._DEFAULT_COMMAND
         if args.iomgr_platform == 'gevent':
             test_command = 'test_gevent'
         runner = [
@@ -880,6 +884,31 @@ class PythonLanguage(object):
 
     def __str__(self):
         return 'python'
+
+
+class PythonAioLanguage(PythonLanguage):
+
+    _DEFAULT_COMMAND = 'test_aio'
+    _TEST_SPECS_FILE = 'src/python/grpcio_tests/tests_aio/tests.json'
+    _TEST_FOLDER = 'test_aio'
+
+    def configure(self, config, args):
+        self.config = config
+        self.args = args
+        self.pythons = self._get_pythons(self.args)
+
+    def _get_pythons(self, args):
+        """Get python runtimes to test with, based on current platform, architecture, compiler etc."""
+
+        if args.compiler not in ('python3.6', 'python3.7', 'python3.8'):
+            raise Exception('Compiler %s not supported.' % args.compiler)
+        if args.iomgr_platform not in ('native'):
+            raise Exception(
+                'Iomgr platform %s not supported.' % args.iomgr_platform)
+        return super()._get_pythons(args)
+
+    def __str__(self):
+        return 'python_aio'
 
 
 class RubyLanguage(object):
@@ -1066,7 +1095,8 @@ class ObjCLanguage(object):
                 cpu_cost=1e6,
                 environ={
                     'SCHEME': 'Sample',
-                    'EXAMPLE_PATH': 'src/objective-c/examples/Sample'
+                    'EXAMPLE_PATH': 'src/objective-c/examples/Sample',
+                    'FRAMEWORKS': 'NO'
                 }))
         out.append(
             self.config.job_spec(
@@ -1088,6 +1118,28 @@ class ObjCLanguage(object):
                 environ={
                     'SCHEME': 'SwiftSample',
                     'EXAMPLE_PATH': 'src/objective-c/examples/SwiftSample'
+                }))
+        out.append(
+            self.config.job_spec(
+                ['src/objective-c/tests/build_one_example.sh'],
+                timeout_seconds=10 * 60,
+                shortname='ios-buildtest-example-tvOS-sample',
+                cpu_cost=1e6,
+                environ={
+                    'SCHEME': 'tvOS-sample',
+                    'EXAMPLE_PATH': 'src/objective-c/examples/tvOS-sample',
+                    'FRAMEWORKS': 'NO'
+                }))
+        out.append(
+            self.config.job_spec(
+                ['src/objective-c/tests/build_one_example.sh'],
+                timeout_seconds=20 * 60,
+                shortname='ios-buildtest-example-watchOS-sample',
+                cpu_cost=1e6,
+                environ={
+                    'SCHEME': 'watchOS-sample-WatchKit-App',
+                    'EXAMPLE_PATH': 'src/objective-c/examples/watchOS-sample',
+                    'FRAMEWORKS': 'NO'
                 }))
         out.append(
             self.config.job_spec(
@@ -1132,6 +1184,13 @@ class ObjCLanguage(object):
                 }))
         out.append(
             self.config.job_spec(
+                ['test/cpp/ios/run_tests.sh'],
+                timeout_seconds=20 * 60,
+                shortname='ios-cpp-test-cronet',
+                cpu_cost=1e6,
+                environ=_FORCE_ENVIRON_FOR_WRAPPERS))
+        out.append(
+            self.config.job_spec(
                 ['src/objective-c/tests/run_one_test.sh'],
                 timeout_seconds=60 * 60,
                 shortname='mac-test-basictests',
@@ -1139,6 +1198,16 @@ class ObjCLanguage(object):
                 environ={
                     'SCHEME': 'MacTests',
                     'PLATFORM': 'macos'
+                }))
+        out.append(
+            self.config.job_spec(
+                ['src/objective-c/tests/run_one_test.sh'],
+                timeout_seconds=30 * 60,
+                shortname='tvos-test-basictests',
+                cpu_cost=1e6,
+                environ={
+                    'SCHEME': 'TvTests',
+                    'PLATFORM': 'tvos'
                 }))
 
         return sorted(out)
@@ -1156,6 +1225,7 @@ class ObjCLanguage(object):
         return [
             ['src/objective-c/tests/build_tests.sh'],
             ['test/core/iomgr/ios/CFStreamTests/build_tests.sh'],
+            ['test/cpp/ios/build_tests.sh'],
         ]
 
     def post_tests_steps(self):
@@ -1230,6 +1300,7 @@ _LANGUAGES = {
     'php': PhpLanguage(),
     'php7': Php7Language(),
     'python': PythonLanguage(),
+    'python-aio': PythonAioLanguage(),
     'ruby': RubyLanguage(),
     'csharp': CSharpLanguage(),
     'objc': ObjCLanguage(),

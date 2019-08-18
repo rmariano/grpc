@@ -73,12 +73,12 @@ class UnaryUnaryMultiCallable(six.with_metaclass(abc.ABCMeta)):
 
     @abc.abstractmethod
     async def __call__(self,
-                 request,
-                 timeout=None,
-                 metadata=None,
-                 credentials=None,
-                 wait_for_ready=None,
-                 compression=None):
+                       request,
+                       timeout=None,
+                       metadata=None,
+                       credentials=None,
+                       wait_for_ready=None,
+                       compression=None):
         """Asynchronously invokes the underlying RPC.
 
         Args:

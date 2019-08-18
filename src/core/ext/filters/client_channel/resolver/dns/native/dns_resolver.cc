@@ -110,7 +110,7 @@ NativeDnsResolver::NativeDnsResolver(ResolverArgs args)
   const grpc_arg* arg = grpc_channel_args_find(
       args.args, GRPC_ARG_DNS_MIN_TIME_BETWEEN_RESOLUTIONS_MS);
   min_time_between_resolutions_ =
-      grpc_channel_arg_get_integer(arg, {1000, 0, INT_MAX});
+      grpc_channel_arg_get_integer(arg, {1000 * 30, 0, INT_MAX});
   interested_parties_ = grpc_pollset_set_create();
   if (args.pollset_set != nullptr) {
     grpc_pollset_set_add_pollset_set(interested_parties_, args.pollset_set);
@@ -258,11 +258,16 @@ void NativeDnsResolver::StartResolvingLocked() {
 
 class NativeDnsResolverFactory : public ResolverFactory {
  public:
-  OrphanablePtr<Resolver> CreateResolver(ResolverArgs args) const override {
-    if (GPR_UNLIKELY(0 != strcmp(args.uri->authority, ""))) {
+  bool IsValidUri(const grpc_uri* uri) const override {
+    if (GPR_UNLIKELY(0 != strcmp(uri->authority, ""))) {
       gpr_log(GPR_ERROR, "authority based dns uri's not supported");
-      return OrphanablePtr<Resolver>(nullptr);
+      return false;
     }
+    return true;
+  }
+
+  OrphanablePtr<Resolver> CreateResolver(ResolverArgs args) const override {
+    if (!IsValidUri(args.uri)) return nullptr;
     return OrphanablePtr<Resolver>(New<NativeDnsResolver>(std::move(args)));
   }
 

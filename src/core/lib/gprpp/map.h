@@ -30,6 +30,7 @@
 #include "src/core/lib/gpr/useful.h"
 #include "src/core/lib/gprpp/memory.h"
 #include "src/core/lib/gprpp/pair.h"
+#include "src/core/lib/gprpp/ref_counted_ptr.h"
 
 namespace grpc_core {
 struct StringLess {
@@ -38,6 +39,13 @@ struct StringLess {
   }
   bool operator()(const UniquePtr<char>& k1, const UniquePtr<char>& k2) {
     return strcmp(k1.get(), k2.get()) < 0;
+  }
+};
+
+template <typename T>
+struct RefCountedPtrLess {
+  bool operator()(const RefCountedPtr<T>& p1, const RefCountedPtr<T>& p2) {
+    return p1.get() < p2.get();
   }
 };
 
@@ -55,7 +63,24 @@ class Map {
   typedef Compare key_compare;
   class iterator;
 
+  Map() = default;
   ~Map() { clear(); }
+
+  // Movable.
+  Map(Map&& other) : root_(other.root_), size_(other.size_) {
+    other.root_ = nullptr;
+    other.size_ = 0;
+  }
+  Map& operator=(Map&& other) {
+    if (this != &other) {
+      clear();
+      root_ = other.root_;
+      size_ = other.size_;
+      other.root_ = nullptr;
+      other.size_ = 0;
+    }
+    return *this;
+  }
 
   T& operator[](key_type&& key);
   T& operator[](const key_type& key);
@@ -64,7 +89,7 @@ class Map {
   // Removes the current entry and points to the next one
   iterator erase(iterator iter);
 
-  size_t size() { return size_; }
+  size_t size() const { return size_; }
 
   template <class... Args>
   Pair<iterator, bool> emplace(Args&&... args);

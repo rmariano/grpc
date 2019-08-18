@@ -330,20 +330,20 @@ GRPCAPI grpc_call_credentials* grpc_google_iam_credentials_create(
 
 /** Options for creating STS Oauth Token Exchange credentials following the IETF
    draft https://tools.ietf.org/html/draft-ietf-oauth-token-exchange-16.
-   Optional fields may be set to NULL. It is the responsibility of the caller to
-   ensure that the subject and actor tokens are refreshed on disk at the
-   specified paths. This API is used for experimental purposes for now and may
-   change in the future. */
+   Optional fields may be set to NULL or empty string. It is the responsibility
+   of the caller to ensure that the subject and actor tokens are refreshed on
+   disk at the specified paths. This API is used for experimental purposes for
+   now and may change in the future. */
 typedef struct {
-  const char* sts_endpoint_url;     /* Required. */
-  const char* resource;             /* Optional. */
-  const char* audience;             /* Optional. */
-  const char* scope;                /* Optional. */
-  const char* requested_token_type; /* Optional. */
-  const char* subject_token_path;   /* Required. */
-  const char* subject_token_type;   /* Required. */
-  const char* actor_token_path;     /* Optional. */
-  const char* actor_token_type;     /* Optional. */
+  const char* token_exchange_service_uri; /* Required. */
+  const char* resource;                   /* Optional. */
+  const char* audience;                   /* Optional. */
+  const char* scope;                      /* Optional. */
+  const char* requested_token_type;       /* Optional. */
+  const char* subject_token_path;         /* Required. */
+  const char* subject_token_type;         /* Required. */
+  const char* actor_token_path;           /* Optional. */
+  const char* actor_token_type;           /* Optional. */
 } grpc_sts_credentials_options;
 
 /** Creates an STS credentials following the STS Token Exchanged specifed in the
@@ -778,6 +778,21 @@ GRPCAPI int grpc_tls_key_materials_config_set_key_materials(
     const grpc_ssl_pem_key_cert_pair** pem_key_cert_pairs,
     size_t num_key_cert_pairs);
 
+/** Set grpc_tls_key_materials_config instance with a provided version number,
+    which is used to keep track of the version of key materials.
+    It returns 1 on success and 0 on failure. It is used for
+    experimental purpose for now and subject to change.
+ */
+GRPCAPI int grpc_tls_key_materials_config_set_version(
+    grpc_tls_key_materials_config* config, int version);
+
+/** Get the version number of a grpc_tls_key_materials_config instance.
+    It returns the version number on success and -1 on failure.
+    It is used for experimental purpose for now and subject to change.
+ */
+GRPCAPI int grpc_tls_key_materials_config_get_version(
+    grpc_tls_key_materials_config* config);
+
 /** --- TLS credential reload config. ---
     It is used for experimental purpose for now and subject to change.*/
 
@@ -793,10 +808,11 @@ typedef void (*grpc_tls_on_credential_reload_done_cb)(
 /** A struct containing all information necessary to schedule/cancel
     a credential reload request. cb and cb_user_data represent a gRPC-provided
     callback and an argument passed to it. key_materials is an in/output
-    parameter containing currently used/newly reloaded credentials. status and
-    error_details are used to hold information about errors occurred when a
-    credential reload request is scheduled/cancelled. It is used for
-    experimental purpose for now and subject to change. */
+    parameter containing currently used/newly reloaded credentials. If
+    credential reload does not result in a new credential, key_materials should
+    not be modified. status and error_details are used to hold information about
+    errors occurred when a credential reload request is scheduled/cancelled. It
+    is used for experimental purpose for now and subject to change. */
 struct grpc_tls_credential_reload_arg {
   grpc_tls_on_credential_reload_done_cb cb;
   void* cb_user_data;

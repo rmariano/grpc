@@ -144,7 +144,7 @@ AresDnsResolver::AresDnsResolver(ResolverArgs args)
   arg = grpc_channel_args_find(channel_args_,
                                GRPC_ARG_DNS_MIN_TIME_BETWEEN_RESOLUTIONS_MS);
   min_time_between_resolutions_ =
-      grpc_channel_arg_get_integer(arg, {1000, 0, INT_MAX});
+      grpc_channel_arg_get_integer(arg, {1000 * 30, 0, INT_MAX});
   // Enable SRV queries option
   arg = grpc_channel_args_find(channel_args_, GRPC_ARG_DNS_ENABLE_SRV_QUERIES);
   enable_srv_queries_ = grpc_channel_arg_get_bool(arg, false);
@@ -433,6 +433,8 @@ void AresDnsResolver::StartResolvingLocked() {
 
 class AresDnsResolverFactory : public ResolverFactory {
  public:
+  bool IsValidUri(const grpc_uri* uri) const override { return true; }
+
   OrphanablePtr<Resolver> CreateResolver(ResolverArgs args) const override {
     return OrphanablePtr<Resolver>(New<AresDnsResolver>(std::move(args)));
   }
