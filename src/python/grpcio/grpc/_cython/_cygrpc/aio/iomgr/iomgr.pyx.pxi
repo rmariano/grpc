@@ -183,4 +183,3 @@ def install_asyncio_iomgr():
         &asyncio_timer_vtable,
         &asyncio_pollset_vtable
     )
-    grpc_init()

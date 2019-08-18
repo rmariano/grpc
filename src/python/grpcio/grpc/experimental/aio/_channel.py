@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Invocation-side implementation of gRPC Asyncio Python."""
+import time
 
 from grpc import _common
 from grpc._cython import cygrpc
@@ -49,7 +50,7 @@ class UnaryUnaryMultiCallable(aio.UnaryUnaryMultiCallable):
 
         serialized_request = _common.serialize(request, self._request_serializer)
         timeout = None if timeout is None else time.time() + timeout
-        response = await self._channel.unary_unary(self._method, serialize_request, timeout)
+        response = await self._channel.unary_unary(self._method, serialized_request, timeout)
 
         return _common.deserialize(response, self._response_deserializer)
 
