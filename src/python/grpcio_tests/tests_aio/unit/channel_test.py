@@ -52,6 +52,36 @@ class TestChannel(test_base.AioTestBase):
 
         self.loop.run_until_complete(coro())
 
+    def test_unary_call_survives_timeout(self):
+        """When time(call) <= timeout ==> continue normally"""
+        async def coro():
+            channel = aio.insecure_channel(self.server_target)
+            hello_call = channel.unary_unary(
+                "/grpc.testing.TestService/EmptyCall",
+                request_serializer=messages_pb2.SimpleRequest.SerializeToString,
+                response_deserializer=messages_pb2.SimpleResponse.FromString
+            )
+            response = await hello_call(messages_pb2.SimpleRequest(), timeout=0.5)
+            await channel.close()
+
+            self.assertEqual(response.username, "test-timeout")
+
+        self.loop.run_until_complete(coro())
+
+    def test_unary_call_times_out(self):
+        """When time(call) > timeout ==> cancel"""
+        async def coro():
+            channel = aio.insecure_channel(self.server_target)
+            empty_call_with_sleep = channel.unary_unary(
+                "/grpc.testing.TestService/EmptyCall",
+                request_serializer=messages_pb2.SimpleRequest.SerializeToString,
+                response_deserializer=messages_pb2.SimpleResponse.FromString,
+            )
+            await empty_call_with_sleep(messages_pb2.SimpleRequest(), timeout=0.1)
+            await channel.close()
+
+        self.loop.run_until_complete(coro())
+
 
 if __name__ == '__main__':
     logging.basicConfig()

@@ -30,6 +30,10 @@ class TestServiceServicer(test_pb2_grpc.TestServiceServicer):
     def UnaryCall(self, request, context):
         return messages_pb2.SimpleResponse()
 
+    def EmptyCall(self, request, context):
+        sleep(0.2)
+        return messages_pb2.SimpleResponse(username="test-timeout")
+
 
 class Server(multiprocessing.Process):
     """
