@@ -55,12 +55,12 @@ class TestChannel(test_base.AioTestBase):
     def test_unary_call_survives_timeout(self):
         async def coro():
             channel = aio.insecure_channel(self.server_target)
-            hello_call = channel.unary_unary(
+            empty_call = channel.unary_unary(
                 "/grpc.testing.TestService/EmptyCall",
                 request_serializer=messages_pb2.SimpleRequest.SerializeToString,
                 response_deserializer=messages_pb2.SimpleResponse.FromString
             )
-            response = await hello_call(messages_pb2.SimpleRequest(), timeout=0.5)
+            response = await empty_call(messages_pb2.SimpleRequest(), timeout=0.5)
             await channel.close()
 
             self.assertEqual(response.username, "test-timeout")

@@ -52,7 +52,7 @@ class UnaryUnaryMultiCallable(aio.UnaryUnaryMultiCallable):
         timeout = None if timeout is None else time.time() + timeout
         response = await self._channel.unary_unary(self._method, serialized_request, timeout)
 
-        return _common.deserialize(response, self._response_deserializer)
+        return _common.deserialize(response or b"", self._response_deserializer)
 
 
 class Channel(aio.Channel):
