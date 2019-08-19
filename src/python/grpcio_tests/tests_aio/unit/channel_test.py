@@ -53,7 +53,6 @@ class TestChannel(test_base.AioTestBase):
         self.loop.run_until_complete(coro())
 
     def test_unary_call_survives_timeout(self):
-        """When time(call) <= timeout ==> continue normally"""
         async def coro():
             channel = aio.insecure_channel(self.server_target)
             hello_call = channel.unary_unary(
@@ -69,7 +68,6 @@ class TestChannel(test_base.AioTestBase):
         self.loop.run_until_complete(coro())
 
     def test_unary_call_times_out(self):
-        """When time(call) > timeout ==> cancel"""
         async def coro():
             channel = aio.insecure_channel(self.server_target)
             empty_call_with_sleep = channel.unary_unary(

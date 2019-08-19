@@ -32,17 +32,19 @@ def _get_free_loopback_tcp_port():
 
 class AioTestBase(unittest.TestCase):
 
-    def setUp(self):
-        self._socket, self._target = _get_free_loopback_tcp_port()
-        self._server = sync_server.Server(self._target)
-        self._server.start()
-        self._loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self._loop)
+    @classmethod
+    def setUpClass(cls):
+        cls._socket, cls._target = _get_free_loopback_tcp_port()
+        cls._server = sync_server.Server(cls._target)
+        cls._server.start()
+        cls._loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(cls._loop)
         aio.init_grpc_aio()
 
-    def tearDown(self):
-        self._server.terminate()
-        self._socket.close()
+    @classmethod
+    def tearDownClass(cls):
+        cls._server.terminate()
+        cls._socket.close()
 
     @property
     def loop(self):
