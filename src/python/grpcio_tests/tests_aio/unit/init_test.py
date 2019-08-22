@@ -35,6 +35,7 @@ def _grpc_blocking_call(target):
 
 
 def _grpc_aio_call(target):
+
     async def coro():
         aio.init_grpc_aio()
         async with aio.insecure_channel(target) as channel:
