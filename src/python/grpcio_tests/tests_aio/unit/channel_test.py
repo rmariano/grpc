@@ -15,6 +15,8 @@
 import logging
 import unittest
 
+import grpc
+
 from grpc.experimental import aio
 from src.proto.grpc.testing import messages_pb2
 from tests_aio.unit import test_base
@@ -52,21 +54,6 @@ class TestChannel(test_base.AioTestBase):
 
         self.loop.run_until_complete(coro())
 
-    def test_unary_call_survives_timeout(self):
-        async def coro():
-            channel = aio.insecure_channel(self.server_target)
-            empty_call = channel.unary_unary(
-                "/grpc.testing.TestService/EmptyCall",
-                request_serializer=messages_pb2.SimpleRequest.SerializeToString,
-                response_deserializer=messages_pb2.SimpleResponse.FromString
-            )
-            response = await empty_call(messages_pb2.SimpleRequest(), timeout=0.5)
-            await channel.close()
-
-            self.assertEqual(response.username, "test-timeout")
-
-        self.loop.run_until_complete(coro())
-
     def test_unary_call_times_out(self):
         async def coro():
             channel = aio.insecure_channel(self.server_target)
@@ -75,10 +62,12 @@ class TestChannel(test_base.AioTestBase):
                 request_serializer=messages_pb2.SimpleRequest.SerializeToString,
                 response_deserializer=messages_pb2.SimpleResponse.FromString,
             )
-            await empty_call_with_sleep(messages_pb2.SimpleRequest(), timeout=0.1)
+            timeout = self.CALL_DELAY / 2
+            await empty_call_with_sleep(messages_pb2.SimpleRequest(), timeout=timeout)
             await channel.close()
 
-        self.loop.run_until_complete(coro())
+        with self.assertRaisesRegex(grpc.RpcError, r".*Deadline Exceeded.*"):
+            self.loop.run_until_complete(coro())
 
 
 if __name__ == '__main__':

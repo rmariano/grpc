@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Invocation-side implementation of gRPC Asyncio Python."""
-import time
+import asyncio
 
 from grpc import _common
 from grpc._cython import cygrpc
@@ -21,12 +21,18 @@ from grpc.experimental import aio
 
 class UnaryUnaryMultiCallable(aio.UnaryUnaryMultiCallable):
 
-    def __init__(self, channel, method, request_serializer,
-                 response_deserializer):
+    def __init__(self, channel: cygrpc.AioChannel, method, request_serializer,
+                 response_deserializer) -> None:
         self._channel = channel
         self._method = method
         self._request_serializer = request_serializer
         self._response_deserializer = response_deserializer
+        self._loop = asyncio.get_event_loop()
+
+    def _timeout_for_deadline(self, timeout=None):
+        if timeout is None:
+            return None
+        return self._loop.time() + timeout
 
     async def __call__(self,
                        request,
@@ -49,10 +55,9 @@ class UnaryUnaryMultiCallable(aio.UnaryUnaryMultiCallable):
             raise NotImplementedError("TODO: compression not implemented yet")
 
         serialized_request = _common.serialize(request, self._request_serializer)
-        timeout = None if timeout is None else time.time() + timeout
+        timeout = self._timeout_for_deadline(timeout)
         response = await self._channel.unary_unary(self._method, serialized_request, timeout)
-
-        return _common.deserialize(response or b"", self._response_deserializer)
+        return _common.deserialize(response, self._response_deserializer)
 
 
 class Channel(aio.Channel):

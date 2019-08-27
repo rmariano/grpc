@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import grpc
 cimport cpython
 
 _EMPTY_FLAGS = 0
@@ -145,4 +146,7 @@ cdef class _AioCall:
             grpc_call_unref(call)
             gpr_free(ops)
 
-        return receive_message_operation.message()
+        if receive_status_on_client_operation.code() == GRPC_STATUS_OK:
+            return receive_message_operation.message()
+
+        raise grpc.RpcError(receive_status_on_client_operation.error_string())
