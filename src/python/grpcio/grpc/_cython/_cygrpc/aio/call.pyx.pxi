@@ -13,10 +13,32 @@
 # limitations under the License.
 
 cimport cpython
+import grpc
 
 _EMPTY_FLAGS = 0
 _EMPTY_METADATA = ()
 _OP_ARRAY_LENGTH = 6
+
+
+class _RpcErrorBase:
+
+    def __init__(self, initial_metadata, code, details, trailing_metadata):
+        self._initial_metadata = initial_metadata
+        self._code = code
+        self._details = details
+        self._trailing_metadata = trailing_metadata
+
+    def initial_metadata(self):
+        return self._initial_metadata
+
+    def code(self):
+        return self._code
+
+    def details(self):
+        return self._details
+
+    def trailing_metadata(self):
+        return self._trailing_metadata
 
 
 cdef class _AioCall:
@@ -59,7 +81,7 @@ cdef class _AioCall:
         else:
             call._waiter_call.set_result(None)
 
-    async def unary_unary(self, method, request):
+    async def unary_unary(self, method, request, timeout=None):
         cdef grpc_call * call
         cdef grpc_slice method_slice
         cdef grpc_op * ops
@@ -72,7 +94,7 @@ cdef class _AioCall:
         cdef Operation receive_status_on_client_operation
 
         cdef grpc_call_error call_status
-
+        cdef gpr_timespec deadline = _timespec_from_time(timeout)
 
         method_slice = grpc_slice_from_copied_buffer(
             <const char *> method,
@@ -86,7 +108,7 @@ cdef class _AioCall:
             self._cq,
             method_slice,
             NULL,
-            _timespec_from_time(None),
+            deadline,
             NULL
         )
 
@@ -146,4 +168,15 @@ cdef class _AioCall:
             grpc_call_unref(call)
             gpr_free(ops)
 
-        return receive_message_operation.message()
+        if receive_status_on_client_operation.code() == GRPC_STATUS_OK:
+            return receive_message_operation.message()
+
+        class _RpcError(_RpcErrorBase, grpc.RpcError):
+            pass
+
+        raise _RpcError(
+            receive_status_on_client_operation.error_string(),
+            receive_status_on_client_operation.code(),
+            receive_status_on_client_operation.details(),
+            receive_status_on_client_operation.trailing_metadata(),
+        )

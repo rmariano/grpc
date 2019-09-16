@@ -26,8 +26,14 @@ from src.proto.grpc.testing import test_pb2_grpc
 # Change for an asynchronous server version once it's implemented.
 class TestServiceServicer(test_pb2_grpc.TestServiceServicer):
 
+    CALL_DELAY = 0.2
+
     def UnaryCall(self, request, context):
         return messages_pb2.SimpleResponse()
+
+    def EmptyCall(self, request, context):
+        sleep(self.CALL_DELAY)
+        return messages_pb2.SimpleResponse(username="test-timeout")
 
 
 if __name__ == "__main__":

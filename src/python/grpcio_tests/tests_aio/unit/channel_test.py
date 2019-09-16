@@ -15,9 +15,12 @@
 import logging
 import unittest
 
+import grpc
+
 from grpc.experimental import aio
 from tests_aio.unit import test_base
 from src.proto.grpc.testing import messages_pb2
+from tests_aio.unit.sync_server import TestServiceServicer
 
 
 class TestChannel(test_base.AioTestBase):
@@ -39,16 +42,34 @@ class TestChannel(test_base.AioTestBase):
     def test_unary_unary(self):
 
         async def coro():
-            channel = aio.insecure_channel(self.server_target)
-            hi = channel.unary_unary(
-                '/grpc.testing.TestService/UnaryCall',
-                request_serializer=messages_pb2.SimpleRequest.SerializeToString,
-                response_deserializer=messages_pb2.SimpleResponse.FromString)
-            response = await hi(messages_pb2.SimpleRequest())
+            async with aio.insecure_channel(self.server_target) as channel:
+                hi = channel.unary_unary(
+                    '/grpc.testing.TestService/UnaryCall',
+                    request_serializer=messages_pb2.SimpleRequest.SerializeToString,
+                    response_deserializer=messages_pb2.SimpleResponse.FromString)
+                response = await hi(messages_pb2.SimpleRequest())
 
-            self.assertEqual(type(response), messages_pb2.SimpleResponse)
+                self.assertEqual(type(response), messages_pb2.SimpleResponse)
 
-            await channel.close()
+        self.loop.run_until_complete(coro())
+
+    def test_unary_call_times_out(self):
+        async def coro():
+            async with aio.insecure_channel(self.server_target) as channel:
+                empty_call_with_sleep = channel.unary_unary(
+                    "/grpc.testing.TestService/EmptyCall",
+                    request_serializer=messages_pb2.SimpleRequest.SerializeToString,
+                    response_deserializer=messages_pb2.SimpleResponse.FromString,
+                )
+                timeout = TestServiceServicer.CALL_DELAY / 2
+                with self.assertRaises(grpc.RpcError) as exception_context:
+                    await empty_call_with_sleep(messages_pb2.SimpleRequest(), timeout=timeout)
+
+                status_code, details = grpc.StatusCode.DEADLINE_EXCEEDED.value
+                self.assertEqual(exception_context.exception.code(), status_code)
+                self.assertEqual(exception_context.exception.details(), details.title())
+                self.assertIsNotNone(exception_context.exception.initial_metadata())
+                self.assertIsNotNone(exception_context.exception.trailing_metadata())
 
         self.loop.run_until_complete(coro())
 
