@@ -16,6 +16,8 @@ import asyncio
 import logging
 import datetime
 
+import grpc
+
 from grpc.experimental import aio
 from src.proto.grpc.testing import messages_pb2
 from src.proto.grpc.testing import test_pb2_grpc
@@ -40,11 +42,17 @@ class _TestServiceServicer(test_pb2_grpc.TestServiceServicer):
                                              response_parameters.size))
 
 
-async def start_test_server():
+async def start_test_server(secure=False):
     server = aio.server(options=(('grpc.so_reuseport', 0),))
     test_pb2_grpc.add_TestServiceServicer_to_server(_TestServiceServicer(),
                                                     server)
-    port = server.add_insecure_port('[::]:0')
+    if secure:
+        server_credentials = grpc.local_server_credentials(
+            grpc.LocalConnectionType.LOCAL_TCP)
+        port = server.add_secure_port('[::]:0', server_credentials)
+    else:
+        port = server.add_insecure_port('[::]:0')
+
     await server.start()
     # NOTE(lidizheng) returning the server to prevent it from deallocation
     return 'localhost:%d' % port, server

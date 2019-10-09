@@ -5,5 +5,6 @@
   "unit.call_test.TestUnaryUnaryCall",
   "unit.channel_test.TestChannel",
   "unit.init_test.TestInsecureChannel",
+  "unit.init_test.TestSecureChannel",
   "unit.server_test.TestServer"
 ]

@@ -263,7 +263,8 @@ class UnaryUnaryCall(Call, _base_call.UnaryUnaryCall):
     def __init__(self, request: RequestType, deadline: Optional[float],
                  channel: cygrpc.AioChannel, method: bytes,
                  request_serializer: SerializingFunction,
-                 response_deserializer: DeserializingFunction) -> None:
+                 response_deserializer: DeserializingFunction,
+                 credentials: Optional[cygrpc.ChannelCredentials]) -> None:
         super().__init__()
         self._request = request
         self._channel = channel
@@ -348,7 +349,8 @@ class UnaryStreamCall(Call, _base_call.UnaryStreamCall):
     def __init__(self, request: RequestType, deadline: Optional[float],
                  channel: cygrpc.AioChannel, method: bytes,
                  request_serializer: SerializingFunction,
-                 response_deserializer: DeserializingFunction) -> None:
+                 response_deserializer: DeserializingFunction,
+                 credentials: Optional[cygrpc.ChannelCredentials] = None) -> None:
         super().__init__()
         self._request = request
         self._channel = channel
@@ -357,7 +359,7 @@ class UnaryStreamCall(Call, _base_call.UnaryStreamCall):
         self._send_unary_request_task = self._loop.create_task(
             self._send_unary_request())
         self._message_aiter = self._fetch_stream_responses()
-        self._cython_call = self._channel.call(method, deadline)
+        self._cython_call = self._channel.call(method, deadline, credentials)
 
     def __del__(self) -> None:
         if not self._status.done():

@@ -12,11 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 cdef class AioChannel:
-    def __cinit__(self, bytes target):
-        self.channel = grpc_insecure_channel_create(<char *>target, NULL, NULL)
-        self.cq = CallbackCompletionQueue()
+    def __cinit__(self, bytes target, ChannelCredentials credentials=None):
         self._target = target
+        self.cq = CallbackCompletionQueue()
+
+        if credentials is None:
+            self.channel = grpc_insecure_channel_create(<char *>target, NULL, NULL)
+        else:
+            self.channel = grpc_secure_channel_create(
+                <grpc_channel_credentials *> credentials.c(),
+                <char *> target,
+                NULL,
+                NULL
+            )
 
     def __repr__(self):
         class_name = self.__class__.__name__
@@ -28,11 +38,12 @@ cdef class AioChannel:
 
     def call(self,
              bytes method,
-             object deadline):
+             object deadline,
+             CallCredentials credentials):
         """Assembles a Cython Call object.
 
         Returns:
           The _AioCall object.
         """
-        cdef _AioCall call = _AioCall(self, deadline, method)
+        cdef _AioCall call = _AioCall(self, deadline, method, credentials)
         return call

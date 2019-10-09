@@ -27,12 +27,13 @@ cdef class _AioCall:
     def __cinit__(self,
                   AioChannel channel,
                   object deadline,
-                  bytes method):
+                  bytes method,
+                  CallCredentials credentials):
         self._channel = channel
         self._references = []
         self._grpc_call_wrapper = GrpcCallWrapper()
         self._loop = asyncio.get_event_loop()
-        self._create_grpc_call(deadline, method)
+        self._create_grpc_call(deadline, method, credentials)
         self._is_locally_cancelled = False
 
     def __dealloc__(self):
@@ -45,10 +46,11 @@ cdef class _AioCall:
 
     cdef grpc_call* _create_grpc_call(self,
                                       object deadline,
-                                      bytes method) except *:
+                                      bytes method
+                                      CallCredentials credentials) except *:
         """Creates the corresponding Core object for this RPC.
 
-        For unary calls, the grpc_call lives shortly and can be destroied after
+        For unary calls, the grpc_call lives shortly and can be destroyed after
         invoke start_batch. However, if either side is streaming, the grpc_call
         life span will be longer than one function. So, it would better save it
         as an instance variable than a stack variable, which reflects its
@@ -56,6 +58,7 @@ cdef class _AioCall:
         """
         cdef grpc_slice method_slice
         cdef gpr_timespec c_deadline = _timespec_from_time(deadline)
+        cdef grpc_call_error set_credentials_error
 
         method_slice = grpc_slice_from_copied_buffer(
             <const char *> method,
@@ -71,6 +74,11 @@ cdef class _AioCall:
             c_deadline,
             NULL
         )
+        if credentials:
+            set_credentials_error = grpc_call_set_credentials(self._grpc_call_wrapper.call, credentials.c())
+            if set_credentials_error != GRPC_CALL_OK:
+                raise Exception("Credentials couldn't have been set")
+
         grpc_slice_unref(method_slice)
 
     cdef void _destroy_grpc_call(self):
@@ -79,7 +87,7 @@ cdef class _AioCall:
 
     def cancel(self, AioRpcStatus status):
         """Cancels the RPC in Core with given RPC status.
-        
+
         Above abstractions must invoke this method to set Core objects into
         proper state.
         """
@@ -113,7 +121,7 @@ cdef class _AioCall:
                           object initial_metadata_observer,
                           object status_observer):
         """Performs a unary unary RPC.
-        
+
         Args:
           method: name of the calling method in bytes.
           request: the serialized requests in bytes.

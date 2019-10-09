@@ -13,9 +13,11 @@
 # limitations under the License.
 """Invocation-side implementation of gRPC Asyncio Python."""
 import asyncio
-from typing import Any, Optional, Sequence, Text, Tuple
+
+from typing import Optional, Sequence, Tuple, Text, Any
 
 import grpc
+
 from grpc import _common
 from grpc._cython import cygrpc
 from . import _base_call
@@ -78,8 +80,9 @@ class UnaryUnaryMultiCallable:
         if metadata:
             raise NotImplementedError("TODO: metadata not implemented yet")
 
-        if credentials:
-            raise NotImplementedError("TODO: credentials not implemented yet")
+        grpc_credentials = None
+        if credentials is not None:
+            grpc_credentials = credentials._credentials
 
         if wait_for_ready:
             raise NotImplementedError(
@@ -97,6 +100,7 @@ class UnaryUnaryMultiCallable:
             self._method,
             self._request_serializer,
             self._response_deserializer,
+            grpc_credentials,
         )
 
 
@@ -148,8 +152,9 @@ class UnaryStreamMultiCallable:
         if metadata:
             raise NotImplementedError("TODO: metadata not implemented yet")
 
-        if credentials:
-            raise NotImplementedError("TODO: credentials not implemented yet")
+        grpc_credentials = None
+        if credentials is not None:
+            grpc_credentials = credentials._credentials
 
         if wait_for_ready:
             raise NotImplementedError(
@@ -167,6 +172,7 @@ class UnaryStreamMultiCallable:
             self._method,
             self._request_serializer,
             self._response_deserializer,
+            grpc_credentials,
         )
 
 
@@ -193,13 +199,10 @@ class Channel:
         if options:
             raise NotImplementedError("TODO: options not implemented yet")
 
-        if credentials:
-            raise NotImplementedError("TODO: credentials not implemented yet")
-
         if compression:
             raise NotImplementedError("TODO: compression not implemented yet")
 
-        self._channel = cygrpc.AioChannel(_common.encode(target))
+        self._channel = cygrpc.AioChannel(_common.encode(target), credentials)
 
     def unary_unary(
             self,
