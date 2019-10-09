@@ -16,6 +16,7 @@ import asyncio
 from typing import Any, Optional, Sequence, Text
 
 import grpc
+
 from grpc import _common
 from grpc._cython import cygrpc
 
@@ -85,8 +86,9 @@ class UnaryUnaryMultiCallable:
         if metadata:
             raise NotImplementedError("TODO: metadata not implemented yet")
 
-        if credentials:
-            raise NotImplementedError("TODO: credentials not implemented yet")
+        grpc_credentials = None
+        if credentials is not None:
+            grpc_credentials = credentials._credentials
 
         if wait_for_ready:
             raise NotImplementedError(
@@ -95,6 +97,7 @@ class UnaryUnaryMultiCallable:
         if compression:
             raise NotImplementedError("TODO: compression not implemented yet")
 
+<<<<<<< HEAD
         if not self._interceptors:
             return UnaryUnaryCall(
                 request,
@@ -114,6 +117,19 @@ class UnaryUnaryMultiCallable:
                 self._request_serializer,
                 self._response_deserializer,
             )
+=======
+        deadline = _timeout_to_deadline(self._loop, timeout)
+
+        return UnaryUnaryCall(
+            request,
+            deadline,
+            self._channel,
+            self._method,
+            self._request_serializer,
+            self._response_deserializer,
+            grpc_credentials,
+        )
+>>>>>>> Add support for credentials in the async unary call
 
 
 class UnaryStreamMultiCallable:
@@ -158,8 +174,9 @@ class UnaryStreamMultiCallable:
         if metadata:
             raise NotImplementedError("TODO: metadata not implemented yet")
 
-        if credentials:
-            raise NotImplementedError("TODO: credentials not implemented yet")
+        grpc_credentials = None
+        if credentials is not None:
+            grpc_credentials = credentials._credentials
 
         if wait_for_ready:
             raise NotImplementedError(
@@ -177,6 +194,7 @@ class UnaryStreamMultiCallable:
             self._method,
             self._request_serializer,
             self._response_deserializer,
+            grpc_credentials,
         )
 
 
@@ -204,12 +222,18 @@ class Channel:
             intercepting any RPC executed with that channel.
         """
 
+<<<<<<< HEAD
         if credentials:
             raise NotImplementedError("TODO: credentials not implemented yet")
+=======
+        if options:
+            raise NotImplementedError("TODO: options not implemented yet")
+>>>>>>> Add support for credentials in the async unary call
 
         if compression:
             raise NotImplementedError("TODO: compression not implemented yet")
 
+<<<<<<< HEAD
         if interceptors is None:
             self._unary_unary_interceptors = None
         else:
@@ -229,6 +253,9 @@ class Channel:
                     .format(invalid_interceptors))
 
         self._channel = cygrpc.AioChannel(_common.encode(target), options)
+=======
+        self._channel = cygrpc.AioChannel(_common.encode(target), credentials)
+>>>>>>> Add support for credentials in the async unary call
 
     def unary_unary(
             self,

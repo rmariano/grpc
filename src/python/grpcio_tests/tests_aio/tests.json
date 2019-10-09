@@ -8,5 +8,6 @@
   "unit.init_test.TestInsecureChannel",
   "unit.interceptor_test.TestInterceptedUnaryUnaryCall",
   "unit.interceptor_test.TestUnaryUnaryClientInterceptor",
+  "unit.init_test.TestSecureChannel",
   "unit.server_test.TestServer"
 ]
