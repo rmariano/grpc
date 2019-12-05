@@ -398,7 +398,7 @@ class TestUnaryStreamCall(AioTestBase):
             with self.assertRaises(asyncio.CancelledError):
                 await task
 
-    def test_credentials(self):
+    def test_call_credentials(self):
 
         class DummyAuth(grpc.AuthMetadataPlugin):
 

@@ -86,9 +86,10 @@ class UnaryUnaryMultiCallable:
         if metadata:
             raise NotImplementedError("TODO: metadata not implemented yet")
 
-        grpc_credentials = None
         if credentials is not None:
             grpc_credentials = credentials._credentials
+        else:
+            grpc_credentials = None
 
         if wait_for_ready:
             raise NotImplementedError(
@@ -174,9 +175,10 @@ class UnaryStreamMultiCallable:
         if metadata:
             raise NotImplementedError("TODO: metadata not implemented yet")
 
-        grpc_credentials = None
         if credentials is not None:
             grpc_credentials = credentials._credentials
+        else:
+            grpc_credentials = None
 
         if wait_for_ready:
             raise NotImplementedError(
