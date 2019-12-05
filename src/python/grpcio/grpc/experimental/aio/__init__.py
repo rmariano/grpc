@@ -16,12 +16,15 @@
 gRPC Async API objects may only be used on the thread on which they were
 created. AsyncIO doesn't provide thread safety for most of its APIs.
 """
+from typing import Optional
+
+import grpc
 from grpc._cython.cygrpc import init_grpc_aio
 
 from ._base_call import RpcContext, Call, UnaryUnaryCall, UnaryStreamCall
 from ._channel import Channel
 from ._channel import UnaryUnaryMultiCallable
-from ._server import server
+from ._server import server, Server
 
 
 def insecure_channel(target, options=None, compression=None):
@@ -41,7 +44,10 @@ def insecure_channel(target, options=None, compression=None):
                    compression)
 
 
-def secure_channel(target, credentials, options=None, compression=None):
+def secure_channel(target: Server,
+                   credentials: grpc.ChannelCredentials,
+                   options: Optional[list] = None,
+                   compression: Optional[grpc.Compression] = None) -> Channel:
     """Creates a secure asynchronous Channel to a server.
 
     Args:
@@ -53,7 +59,7 @@ def secure_channel(target, credentials, options=None, compression=None):
         used over the lifetime of the channel. This is an EXPERIMENTAL option.
 
     Returns:
-      An aio (asynchronous) Channel.
+      An aio.Channel.
     """
     return Channel(target, () if options is None else options,
                    credentials._credentials, compression)
