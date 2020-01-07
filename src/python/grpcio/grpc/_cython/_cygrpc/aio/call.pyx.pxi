@@ -48,7 +48,7 @@ cdef class _AioCall:
 
     cdef grpc_call* _create_grpc_call(self,
                                       object deadline,
-                                      bytes method
+                                      bytes method,
                                       CallCredentials credentials) except *:
         """Creates the corresponding Core object for this RPC.
 

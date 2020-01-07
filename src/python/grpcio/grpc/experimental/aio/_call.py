@@ -346,11 +346,15 @@ class UnaryStreamCall(Call, _base_call.UnaryStreamCall):
     _send_unary_request_task: asyncio.Task
     _message_aiter: AsyncIterable[ResponseType]
 
-    def __init__(self, request: RequestType, deadline: Optional[float],
-                 channel: cygrpc.AioChannel, method: bytes,
+    def __init__(self,
+                 request: RequestType,
+                 deadline: Optional[float],
+                 channel: cygrpc.AioChannel,
+                 method: bytes,
                  request_serializer: SerializingFunction,
                  response_deserializer: DeserializingFunction,
-                 credentials: Optional[cygrpc.ChannelCredentials] = None) -> None:
+                 credentials: Optional[cygrpc.ChannelCredentials] = None
+                ) -> None:
         super().__init__()
         self._request = request
         self._channel = channel

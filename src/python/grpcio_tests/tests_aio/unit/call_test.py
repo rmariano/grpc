@@ -410,15 +410,14 @@ class TestUnaryStreamCall(AioTestBase):
             server_target, _ = await start_test_server(secure=False)  # pylint: disable=unused-variable
 
             async with aio.insecure_channel(server_target) as channel:
-                hi = channel.unary_unary(
-                    '/grpc.testing.TestService/UnaryCall',
-                    request_serializer=messages_pb2.SimpleRequest.
-                    SerializeToString,
-                    response_deserializer=messages_pb2.SimpleResponse.FromString
-                )
+                hi = channel.unary_unary('/grpc.testing.TestService/UnaryCall',
+                                         request_serializer=messages_pb2.
+                                         SimpleRequest.SerializeToString,
+                                         response_deserializer=messages_pb2.
+                                         SimpleResponse.FromString)
                 call_credentials = grpc.metadata_call_credentials(DummyAuth())
-                call = hi(
-                    messages_pb2.SimpleRequest(), credentials=call_credentials)
+                call = hi(messages_pb2.SimpleRequest(),
+                          credentials=call_credentials)
                 response = await call
 
                 self.assertIsInstance(response, messages_pb2.SimpleResponse)
