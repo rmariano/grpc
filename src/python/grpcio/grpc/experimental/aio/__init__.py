@@ -55,7 +55,7 @@ def insecure_channel(
                    interceptors=interceptors)
 
 
-def secure_channel(target: Server,
+def secure_channel(target: Text,
                    credentials: grpc.ChannelCredentials,
                    options: Optional[list] = None,
                    compression: Optional[grpc.Compression] = None) -> Channel:
