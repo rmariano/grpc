@@ -270,7 +270,7 @@ class UnaryUnaryCall(Call, _base_call.UnaryUnaryCall):
         self._channel = channel
         self._request_serializer = request_serializer
         self._response_deserializer = response_deserializer
-        self._cython_call = self._channel.call(method, deadline)
+        self._cython_call = self._channel.call(method, deadline, credentials)
         self._call = self._loop.create_task(self._invoke())
 
     def __del__(self) -> None:
