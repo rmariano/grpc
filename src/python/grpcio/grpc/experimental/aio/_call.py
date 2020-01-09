@@ -260,6 +260,7 @@ class UnaryUnaryCall(Call, _base_call.UnaryUnaryCall):
     _call: asyncio.Task
     _cython_call: cygrpc._AioCall
 
+    # pylint: disable=too-many-arguments
     def __init__(self, request: RequestType, deadline: Optional[float],
                  channel: cygrpc.AioChannel, method: bytes,
                  request_serializer: SerializingFunction,
@@ -346,6 +347,7 @@ class UnaryStreamCall(Call, _base_call.UnaryStreamCall):
     _send_unary_request_task: asyncio.Task
     _message_aiter: AsyncIterable[ResponseType]
 
+    # pylint: disable=too-many-arguments
     def __init__(self,
                  request: RequestType,
                  deadline: Optional[float],

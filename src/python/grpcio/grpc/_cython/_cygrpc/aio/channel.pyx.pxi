@@ -23,6 +23,7 @@ cdef class AioChannel:
 
         if credentials is None:
             self.channel = grpc_insecure_channel_create(<char *>target, channel_args.c_args(), NULL)
+            self._is_secure = False
         else:
             self.channel = grpc_secure_channel_create(
                 <grpc_channel_credentials *> credentials.c(),
@@ -30,6 +31,7 @@ cdef class AioChannel:
                 channel_args.c_args(),
                 NULL
             )
+            self._is_secure = True
 
     def __repr__(self):
         class_name = self.__class__.__name__
@@ -42,11 +44,13 @@ cdef class AioChannel:
     def call(self,
              bytes method,
              object deadline,
-             CallCredentials credentials):
+             CallCredentials call_credentials):
         """Assembles a Cython Call object.
 
         Returns:
           The _AioCall object.
         """
-        cdef _AioCall call = _AioCall(self, deadline, method, credentials)
+        if call_credentials is not None and not self._is_secure:
+            raise RuntimeError("Cannot provide call credentials to an insecure channel.")
+        cdef _AioCall call = _AioCall(self, deadline, method, call_credentials)
         return call
