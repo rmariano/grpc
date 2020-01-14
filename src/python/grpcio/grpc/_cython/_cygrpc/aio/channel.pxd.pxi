@@ -17,4 +17,4 @@ cdef class AioChannel:
         grpc_channel * channel
         CallbackCompletionQueue cq
         bytes _target
-        bool _is_secure
+        bint _is_secure
