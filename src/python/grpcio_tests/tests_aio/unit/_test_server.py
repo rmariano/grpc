@@ -14,10 +14,10 @@
 
 import asyncio
 import datetime
-import logging
 
 import grpc
 from grpc.experimental import aio
+from tests.unit import resources
 
 from src.proto.grpc.testing import empty_pb2, messages_pb2, test_pb2_grpc
 from tests_aio.unit import _constants
@@ -37,6 +37,11 @@ async def _maybe_echo_metadata(servicer_context):
         trailing_metadatum = (_TRAILING_METADATA_KEY,
                               invocation_metadata[_TRAILING_METADATA_KEY])
         servicer_context.set_trailing_metadata((trailing_metadatum,))
+
+_PRIVATE_KEY = resources.private_key()
+_CERTIFICATE_CHAIN = resources.certificate_chain()
+_TEST_ROOT_CERTIFICATES = resources.test_root_certificates()
+_SERVER_CERTS = ((_PRIVATE_KEY, _CERTIFICATE_CHAIN),)
 
 
 async def _maybe_echo_status(request: messages_pb2.SimpleRequest,
@@ -126,8 +131,11 @@ async def start_test_server(port=0, secure=False, server_credentials=None):
 
     if secure:
         if server_credentials is None:
-            server_credentials = grpc.local_server_credentials(
-                grpc.LocalConnectionType.LOCAL_TCP)
+            server_credentials = grpc.ssl_server_credentials(
+                _SERVER_CERTS,
+                root_certificates=_TEST_ROOT_CERTIFICATES,
+                require_client_auth=True
+            )
         port = server.add_secure_port('[::]:%d' % port, server_credentials)
     else:
         port = server.add_insecure_port('[::]:%d' % port)
