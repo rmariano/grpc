@@ -33,8 +33,8 @@ from ._interceptor import (InterceptedUnaryUnaryCall,
 from ._typing import (ChannelArgumentType, DeserializingFunction, MetadataType,
                       SerializingFunction, RequestIterableType)
 from ._utils import _timeout_to_deadline
+from ._metadata import Metadata
 
-_IMMUTABLE_EMPTY_TUPLE = tuple()
 _USER_AGENT = 'grpc-python-asyncio/{}'.format(_grpcio_metadata.__version__)
 
 if sys.version_info[1] < 7:
@@ -89,6 +89,19 @@ class _BaseMultiCallable:
         self._response_deserializer = response_deserializer
         self._interceptors = interceptors
 
+    @staticmethod
+    def _init_metadata(metadata: Optional[Metadata] = None,
+                       compression: Optional[grpc.Compression] = None
+                      ) -> Metadata:
+        """Based on the provided values for <metadata> or <compression> initialise the final
+        metadata, as it should be used for the current call.
+        """
+        metadata = metadata or Metadata()
+        if compression:
+            metadata = Metadata(
+                *_compression.augment_metadata(metadata, compression))
+        return metadata
+
 
 class UnaryUnaryMultiCallable(_BaseMultiCallable,
                               _base_channel.UnaryUnaryMultiCallable):
@@ -97,14 +110,13 @@ class UnaryUnaryMultiCallable(_BaseMultiCallable,
                  request: Any,
                  *,
                  timeout: Optional[float] = None,
-                 metadata: Optional[MetadataType] = _IMMUTABLE_EMPTY_TUPLE,
+                 metadata: Optional[MetadataType] = None,
                  credentials: Optional[grpc.CallCredentials] = None,
                  wait_for_ready: Optional[bool] = None,
                  compression: Optional[grpc.Compression] = None
                 ) -> _base_call.UnaryUnaryCall:
-        if compression:
-            metadata = _compression.augment_metadata(metadata, compression)
 
+        metadata = self._init_metadata(metadata, compression)
         if not self._interceptors:
             call = UnaryUnaryCall(request, _timeout_to_deadline(timeout),
                                   metadata, credentials, wait_for_ready,
@@ -128,14 +140,13 @@ class UnaryStreamMultiCallable(_BaseMultiCallable,
                  request: Any,
                  *,
                  timeout: Optional[float] = None,
-                 metadata: Optional[MetadataType] = _IMMUTABLE_EMPTY_TUPLE,
+                 metadata: Optional[MetadataType] = None,
                  credentials: Optional[grpc.CallCredentials] = None,
                  wait_for_ready: Optional[bool] = None,
                  compression: Optional[grpc.Compression] = None
                 ) -> _base_call.UnaryStreamCall:
-        if compression:
-            metadata = _compression.augment_metadata(metadata, compression)
 
+        metadata = self._init_metadata(metadata, compression)
         deadline = _timeout_to_deadline(timeout)
 
         if not self._interceptors:
@@ -159,14 +170,13 @@ class StreamUnaryMultiCallable(_BaseMultiCallable,
     def __call__(self,
                  request_iterator: Optional[RequestIterableType] = None,
                  timeout: Optional[float] = None,
-                 metadata: Optional[MetadataType] = _IMMUTABLE_EMPTY_TUPLE,
+                 metadata: Optional[MetadataType] = None,
                  credentials: Optional[grpc.CallCredentials] = None,
                  wait_for_ready: Optional[bool] = None,
                  compression: Optional[grpc.Compression] = None
                 ) -> _base_call.StreamUnaryCall:
-        if compression:
-            metadata = _compression.augment_metadata(metadata, compression)
 
+        metadata = self._init_metadata(metadata, compression)
         deadline = _timeout_to_deadline(timeout)
 
         if not self._interceptors:
@@ -190,14 +200,13 @@ class StreamStreamMultiCallable(_BaseMultiCallable,
     def __call__(self,
                  request_iterator: Optional[RequestIterableType] = None,
                  timeout: Optional[float] = None,
-                 metadata: Optional[MetadataType] = _IMMUTABLE_EMPTY_TUPLE,
+                 metadata: Optional[MetadataType] = None,
                  credentials: Optional[grpc.CallCredentials] = None,
                  wait_for_ready: Optional[bool] = None,
                  compression: Optional[grpc.Compression] = None
                 ) -> _base_call.StreamStreamCall:
-        if compression:
-            metadata = _compression.augment_metadata(metadata, compression)
 
+        metadata = self._init_metadata(metadata, compression)
         deadline = _timeout_to_deadline(timeout)
 
         call = StreamStreamCall(request_iterator, deadline, metadata,
