@@ -106,8 +106,8 @@ class TestStreamUnaryClientInterceptor(AioTestBase):
                 self.assertEqual(_NUM_STREAM_REQUESTS * _REQUEST_PAYLOAD_SIZE,
                                  response.aggregated_payload_size)
                 self.assertEqual(await call.code(), grpc.StatusCode.OK)
-                self.assertEqual(await call.initial_metadata(), ())
-                self.assertEqual(await call.trailing_metadata(), ())
+                self.assertEqual(await call.initial_metadata(), aio.Metadata())
+                self.assertEqual(await call.trailing_metadata(), aio.Metadata())
                 self.assertEqual(await call.details(), '')
                 self.assertEqual(await call.debug_error_string(), '')
                 self.assertEqual(call.cancel(), False)
@@ -145,8 +145,8 @@ class TestStreamUnaryClientInterceptor(AioTestBase):
                 self.assertEqual(_NUM_STREAM_REQUESTS * _REQUEST_PAYLOAD_SIZE,
                                  response.aggregated_payload_size)
                 self.assertEqual(await call.code(), grpc.StatusCode.OK)
-                self.assertEqual(await call.initial_metadata(), ())
-                self.assertEqual(await call.trailing_metadata(), ())
+                self.assertEqual(await call.initial_metadata(), aio.Metadata())
+                self.assertEqual(await call.trailing_metadata(), aio.Metadata())
                 self.assertEqual(await call.details(), '')
                 self.assertEqual(await call.debug_error_string(), '')
                 self.assertEqual(call.cancel(), False)
@@ -244,8 +244,8 @@ class TestStreamUnaryClientInterceptor(AioTestBase):
                 self.assertEqual(_NUM_STREAM_REQUESTS * _REQUEST_PAYLOAD_SIZE,
                                  response.aggregated_payload_size)
                 self.assertEqual(await call.code(), grpc.StatusCode.OK)
-                self.assertEqual(await call.initial_metadata(), ())
-                self.assertEqual(await call.trailing_metadata(), ())
+                self.assertEqual(await call.initial_metadata(), aio.Metadata())
+                self.assertEqual(await call.trailing_metadata(), aio.Metadata())
                 self.assertEqual(await call.details(), '')
                 self.assertEqual(await call.debug_error_string(), '')
                 self.assertEqual(call.cancel(), False)

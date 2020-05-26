@@ -30,10 +30,10 @@ from ._interceptor import (InterceptedUnaryUnaryCall,
                            UnaryUnaryClientInterceptor,
                            UnaryStreamClientInterceptor,
                            StreamUnaryClientInterceptor)
+from ._metadata import Metadata
 from ._typing import (ChannelArgumentType, DeserializingFunction, MetadataType,
                       SerializingFunction, RequestIterableType)
 from ._utils import _timeout_to_deadline
-from ._metadata import Metadata
 
 _USER_AGENT = 'grpc-python-asyncio/{}'.format(_grpcio_metadata.__version__)
 
